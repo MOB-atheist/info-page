@@ -8,13 +8,12 @@
 :root{--bg:#000;--fg:#f2f2f2;--muted:#9a9a9a;--card:rgba(255,255,255,.08);--card-h:rgba(255,255,255,.2);--line:rgba(255,255,255,.25);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-#bgvideo,#fx{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-3}
+#bgvideo{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:-3}
 #bgvideo{filter:grayscale(1) contrast(1.15) brightness(.7);display:none}
-#fx{z-index:-2}
 .overlay{position:fixed;inset:0;z-index:-1;pointer-events:none;
 background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.85) 100%),
 repeating-linear-gradient(0deg,rgba(255,255,255,.03) 0 1px,transparent 1px 3px)}
-main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:28px}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;gap:28px;background:transparent;}
 .profile{text-align:center}
 .avatar{width:96px;height:96px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:36px;font-weight:700;margin:0 auto 14px;backdrop-filter:blur(8px);letter-spacing:-1px}
 h1{margin:0;font-size:1.5rem;letter-spacing:.02em}
@@ -30,7 +29,6 @@ footer{color:var(--muted);font-size:.8rem}
 <body>
 <!-- OPTIONAL: put your own video file URL below (mp4/webm). It will be turned black & white automatically. -->
 <video id="bgvideo" muted loop playsinline autoplay></video>
-<canvas id="fx"></canvas>
 <div class="overlay"></div>
 
 <main>
@@ -59,47 +57,6 @@ if (VIDEO_URL) {
   v.play().catch(function(){});
 }
 
-// ---- Monochrome animated effect: flowing light waves + film grain ----
-var c = document.getElementById("fx"), x = c.getContext("2d");
-var W, H, t = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-var grain = document.createElement("canvas"); grain.width = grain.height = 128;
-var gx = grain.getContext("2d");
-function resize(){ W = c.width = innerWidth * dpr; H = c.height = innerHeight * dpr; }
-addEventListener("resize", resize); resize();
-var still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-function makeGrain(){
-  var d = gx.createImageData(128,128);
-  for (var i=0;i<d.data.length;i+=4){ var n=Math.random()*255; d.data[i]=d.data[i+1]=d.data[i+2]=n; d.data[i+3]=26; }
-  gx.putImageData(d,0,0);
-}
-function frame(){
-  t += 0.004;
-  x.globalCompositeOperation = "source-over";
-  x.fillStyle = "#050505"; x.fillRect(0,0,W,H);
-  x.globalCompositeOperation = "lighter";
-  for (var k=0;k<5;k++){
-    var cx = W*(.5+.38*Math.sin(t*(1+k*.3)+k*2)), cy = H*(.5+.38*Math.cos(t*(.8+k*.25)+k));
-    var r = Math.max(W,H)*(.35+.1*Math.sin(t*2+k));
-    var g = x.createRadialGradient(cx,cy,0,cx,cy,r);
-    g.addColorStop(0,"rgba(200,200,200,.35)"); g.addColorStop(1,"rgba(0,0,0,0)");
-    x.fillStyle = g; x.fillRect(0,0,W,H);
-  }
-  x.globalCompositeOperation = "source-over";
-  x.strokeStyle = "rgba(255,255,255,.12)"; x.lineWidth = dpr;
-  for (var j=0;j<14;j++){
-    x.beginPath();
-    for (var px=0; px<=W; px+=16*dpr){
-      var py = H*(j/14) + Math.sin(px*.004/dpr + t*3 + j*.6)*40*dpr + Math.sin(px*.011/dpr - t*2)*14*dpr;
-      px===0 ? x.moveTo(px,py) : x.lineTo(px,py);
-    }
-    x.stroke();
-  }
-  if (!still && Math.random() < .4) makeGrain();
-  x.globalCompositeOperation = "overlay";
-  x.fillStyle = x.createPattern(grain,"repeat"); x.fillRect(0,0,W,H);
-  if (!still) requestAnimationFrame(frame);
-}
-makeGrain(); frame();
 </script>
 </body>
 </html>
